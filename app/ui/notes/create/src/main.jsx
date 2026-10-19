@@ -1,0 +1,10 @@
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import CreateNoteApp from "./App.jsx";
+import "./style.css";
+
+createRoot(document.querySelector("#root")).render(
+  <StrictMode>
+    <CreateNoteApp />
+  </StrictMode>
+);
