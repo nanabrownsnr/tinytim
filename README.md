@@ -23,6 +23,22 @@ managing notes.
 Each tool advertises its own dedicated UI resource URI so MCP clients can
 render the most appropriate interface for the operation.
 
+## MCP Usage
+
+The MCP transport is exposed at `POST /mcp`. Example `list_notes` tool call:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "list_notes",
+    "arguments": {}
+  }
+}
+```
+
 ## UI Resource URIs
 | Tool        | UI Resource URI                                |
 |-------------|------------------------------------------------|
