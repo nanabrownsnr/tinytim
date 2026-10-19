@@ -1,7 +1,14 @@
 """Notes management tools with MCP App UI integration.
 
-Provides create_note, list_notes, and get_note. All tools share a stable
-``ui://tinytim/notes.html`` URI that links to the compiled React UI.
+Provides create_note, list_notes, and get_note. Each tool now advertises
+its own dedicated UI resource URI so MCP clients can render the most
+appropriate interface for the operation.
+
+| Tool        | UI resource URI                                    |
+|-------------|----------------------------------------------------|
+| create_note | ``ui://tinytim/notes/create.html``                  |
+| list_notes  | ``ui://tinytim/notes/list.html``                    |
+| get_note    | ``ui://tinytim/notes/detail.html``                  |
 """
 
 import threading
@@ -12,7 +19,9 @@ from typing import Any
 from fastmcp.apps import AppConfig
 from fastmcp.tools import ToolResult
 
-from app.ui.notes.resource import VIEW_URI
+from app.ui.notes.create.resource import CREATE_URI
+from app.ui.notes.detail.resource import DETAIL_URI
+from app.ui.notes.list.resource import LIST_URI
 
 # Module-level state: in-memory notes store shared across all tool calls.
 _notes_lock = threading.Lock()
@@ -53,17 +62,31 @@ def _add_note(entry: dict[str, Any]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _make_meta() -> dict[str, Any]:
+def _make_create_meta() -> dict[str, Any]:
     return {
-        "ui": {"resourceUri": VIEW_URI, "visibility": ["model", "app"]},
-        "ui/resourceUri": VIEW_URI,
+        "ui": {"resourceUri": CREATE_URI, "visibility": ["model", "app"]},
+        "ui/resourceUri": CREATE_URI,
+    }
+
+
+def _make_list_meta() -> dict[str, Any]:
+    return {
+        "ui": {"resourceUri": LIST_URI, "visibility": ["model", "app"]},
+        "ui/resourceUri": LIST_URI,
+    }
+
+
+def _make_detail_meta() -> dict[str, Any]:
+    return {
+        "ui": {"resourceUri": DETAIL_URI, "visibility": ["model", "app"]},
+        "ui/resourceUri": DETAIL_URI,
     }
 
 
 def register_tool(mcp):
     @mcp.tool(
         app=AppConfig(
-            resource_uri=VIEW_URI,
+            resource_uri=CREATE_URI,
             visibility=["model", "app"],
         )
     )
@@ -105,10 +128,15 @@ def register_tool(mcp):
         return ToolResult(
             content=f'Note "{entry["title"]}" created successfully.',
             structured_content=structured,
-            meta=_make_meta(),
+            meta=_make_create_meta(),
         )
 
-    @mcp.tool()
+    @mcp.tool(
+        app=AppConfig(
+            resource_uri=LIST_URI,
+            visibility=["model", "app"],
+        )
+    )
     def list_notes() -> ToolResult:
         """List all notes created during the running process.
 
@@ -124,10 +152,15 @@ def register_tool(mcp):
         return ToolResult(
             content=f"{len(notes)} note(s) found.",
             structured_content=structured,
-            meta=_make_meta(),
+            meta=_make_list_meta(),
         )
 
-    @mcp.tool()
+    @mcp.tool(
+        app=AppConfig(
+            resource_uri=DETAIL_URI,
+            visibility=["model", "app"],
+        )
+    )
     def get_note(note_id: str) -> ToolResult:
         """Retrieve a single note by its id.
 
@@ -148,5 +181,5 @@ def register_tool(mcp):
         return ToolResult(
             content=note["title"],
             structured_content=structured,
-            meta=_make_meta(),
+            meta=_make_detail_meta(),
         )

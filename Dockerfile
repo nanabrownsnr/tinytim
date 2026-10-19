@@ -1,15 +1,24 @@
-# Builds the MCP App and production Python runtime. Update the UI COPY paths
+# Builds the MCP Apps and production Python runtime. Update the UI COPY paths
 # when renaming the example; generated dist/ files stay out of source control.
 FROM node:22-alpine AS ui-builder
 
 WORKDIR /ui
 
-COPY app/ui/notes/package.json app/ui/notes/package-lock.json ./
-RUN npm ci --no-audit --no-fund
+COPY app/ui/notes/list/package.json app/ui/notes/list/package-lock.json ./list/
+COPY app/ui/notes/create/package.json app/ui/notes/create/package-lock.json ./create/
+COPY app/ui/notes/detail/package.json app/ui/notes/detail/package-lock.json ./detail/
 
-COPY app/ui/notes/index.html app/ui/notes/vite.config.js ./
-COPY app/ui/notes/src/ ./src/
-RUN npm run build
+RUN cd list && npm ci --no-audit --no-fund
+RUN cd create && npm ci --no-audit --no-fund
+RUN cd detail && npm ci --no-audit --no-fund
+
+COPY app/ui/notes/list/ ./list/
+COPY app/ui/notes/create/ ./create/
+COPY app/ui/notes/detail/ ./detail/
+
+RUN cd list && npm run build
+RUN cd create && npm run build
+RUN cd detail && npm run build
 
 
 FROM python:3.12-slim
@@ -27,7 +36,9 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev
 
 COPY app/ ./app/
-COPY --from=ui-builder /ui/dist/ ./app/ui/notes/dist/
+COPY --from=ui-builder /ui/list/dist/ ./app/ui/notes/list/dist/
+COPY --from=ui-builder /ui/create/dist/ ./app/ui/notes/create/dist/
+COPY --from=ui-builder /ui/detail/dist/ ./app/ui/notes/detail/dist/
 
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
